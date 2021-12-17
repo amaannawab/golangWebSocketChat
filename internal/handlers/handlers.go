@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	wsConstants "ws/internal/constants"
 	"ws/internal/dto"
 
 	"github.com/CloudyKit/jet/v6"
@@ -14,7 +15,7 @@ var wsChan = make(chan dto.WsPayload)
 var clients = make(map[dto.WebSocketConnection]string)
 
 var views = jet.NewSet(
-	jet.NewOSFileSystemLoader("./html"),
+	jet.NewOSFileSystemLoader(wsConstants.HtmlPath),
 	jet.InDevelopmentMode(),
 )
 
@@ -25,7 +26,8 @@ var upgradeConnection = websocket.Upgrader{
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
-	err := renderPage(w, "home.htm", nil)
+
+	err := renderPage(w, wsConstants.Home, nil)
 	if err != nil {
 		log.Println(err)
 
@@ -40,7 +42,7 @@ func WsEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("Client connected to endpoint")
 	response := dto.WsJsonResponse{
-		Message: `<em><small>Connected to server</small></em>`,
+		Message: wsConstants.ServerConnected,
 	}
 	conn := dto.WebSocketConnection{Conn: ws}
 	clients[conn] = ""
@@ -84,22 +86,22 @@ func ListenToWsChannel() {
 	for {
 		e := <-wsChan
 		switch e.Action {
-		case "username":
+		case wsConstants.Username:
 			clients[e.Conn] = e.Username
 			userList := getUserList()
-			response.Action = "list_users"
+			response.Action = wsConstants.ListUsers
 			response.ConnectedUsers = userList
 			broadcastToAll(response)
 			//get a list of all users and send it back via Broadcast
 			break
-		case "left":
-			response.Action = "list_users"
+		case wsConstants.Left:
+			response.Action = wsConstants.ListUsers
 			delete(clients, e.Conn)
 			response.ConnectedUsers = getUserList()
 			broadcastToAll(response)
 			break
-		case "broadcast":
-			response.Action = "broadcast"
+		case wsConstants.Broadcast:
+			response.Action = wsConstants.Broadcast
 			response.Message = fmt.Sprintf(`<strong>%s</strong>: %s`, e.Username, e.Message)
 			broadcastToAll(response)
 		}
