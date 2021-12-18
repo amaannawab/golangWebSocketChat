@@ -5,3 +5,5 @@ To run it , cd cmd/web && go run ./
 
 
 Now open the app on localhost:8080 and open the app in different tabs , and type in the username and message , each tab opens a new websocket and you have an example of a live chat room with help of websockets
+
+Go to https://sheltered-cliffs-02258.herokuapp.com/ to try out the app
